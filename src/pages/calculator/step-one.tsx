@@ -4,9 +4,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import type { FormData } from "@/App"
 
 interface StepOneProps {
-    onSubmit: () => void
+    onSubmit: (data: FormData) => void
 }
 
 function StepOne({ onSubmit }: StepOneProps) {
@@ -17,7 +18,13 @@ function StepOne({ onSubmit }: StepOneProps) {
     const availableModels = brand ? carModels[brand] || [] : []
 
     const handleSubmit = () => {
-        onSubmit()
+        if (brand && model && expense) {
+            onSubmit({
+                brand,
+                model,
+                monthlyExpense: Number.parseFloat(expense),
+            })
+        }
     }
 
     const isValid = brand && model && expense && Number.parseFloat(expense) > 0
