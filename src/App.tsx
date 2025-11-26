@@ -49,11 +49,7 @@ function App() {
 
   return (
     <>
-      <header className="w-full bg-sky-950 text-center py-8">
-        <h1 className="text-4xl font-bold text-white"> Mitsui</h1>
-      </header>
-
-      {step === 1 && <StepOne />}
+      {step === 1 && <StepOne onSubmit={handleStepOneSubmit}/>}
       {step === 2 && <StepTwo />}
       {step === 3 && <StepThree />}
     </>
