@@ -132,7 +132,7 @@ export const fetchToyotaHybridVersions = async (): Promise<any[] | null> => {
       )
     `)
     .eq('is_hybrid', true)
-    .eq('models.brands.name', 'Toyota') // Filtro adicional para solo Toyota
+    .eq('models.brands.name', 'TOYOTA') // Filtro adicional para solo Toyota
     .order('km_per_gallon', { ascending: false }); // Mejor rendimiento primero
 
   if (error) {

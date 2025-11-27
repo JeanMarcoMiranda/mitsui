@@ -1,35 +1,29 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-// Importamos solo lo necesario desde el orquestador
-import type { CalculatedData } from "@/App"
+import type { CalculatedData, SelectedHybridData } from "@/App"
 import MitsuiLogo from "@/assets/mitsui_logo.svg"
+import { ArrowLeft } from "lucide-react"
+
 // Icons
-import AhorroIcon from "@/assets/icons/ahorro.svg";
-import MantenimientoIcon from "@/assets/icons/mantenimiento.svg";
-import RuidoIcon from "@/assets/icons/ruido.svg";
-import PotenciaIcon from "@/assets/icons/potencia.svg";
-import EcologicoIcon from "@/assets/icons/ecologico.svg";
-import TecnologiaIcon from "@/assets/icons/tecnologia.svg";
-// Importaremos el tipo HybridComparison para un mejor tipado si fuera necesario,
-// pero aquí nos enfocaremos en usar el CalculatedData que viene del App.tsx
+import AhorroIcon from "@/assets/icons/ahorro.svg"
+import MantenimientoIcon from "@/assets/icons/mantenimiento.svg"
+import RuidoIcon from "@/assets/icons/ruido.svg"
+import PotenciaIcon from "@/assets/icons/potencia.svg"
+import EcologicoIcon from "@/assets/icons/ecologico.svg"
+import TecnologiaIcon from "@/assets/icons/tecnologia.svg"
 
 interface StepThreeProps {
-  // Ya no necesitamos formData, ya que todos los datos clave (gasto) están en calculatedData
-  // Lo dejamos solo para acceder al monthlyExpense directamente si es necesario.
   calculatedData: CalculatedData
-  selectedHybridId: string
+  selectedHybrid: SelectedHybridData
   onReset: () => void
+  onBack: () => void
 }
 
-// ... (Los beneficios se mantienen igual) ...
 const benefits = [
   {
-    // Usamos el componente SVG importado
     icon: AhorroIcon,
     title: "Ahorro continuo",
-    description: "Consumo hasta un 40 % menor de combustible.",
+    description: "Consumo hasta un 40% menor de combustible.",
   },
   {
     icon: MantenimientoIcon,
@@ -58,182 +52,207 @@ const benefits = [
   },
 ]
 
+function StepThree({ calculatedData, selectedHybrid, onReset, onBack }: StepThreeProps) {
+  // Formateador de moneda
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString("es-PE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  }
 
-function StepThree({ calculatedData, selectedHybridId, onReset }: StepThreeProps) {
-  // 🔑 CLAVE: Encontrar el híbrido seleccionado usando el ID
-  const selectedHybrid = calculatedData.hybridComparisons.find(
-    (h) => h.id.toString() === selectedHybridId
-  )
+  // Formateador de números grandes sin decimales
+  const formatInteger = (value: number) => {
+    return value.toLocaleString("es-PE", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+  }
 
-  if (!selectedHybrid) return null
-
-  // 🔑 CLAVE: Usar el ahorro mensual ya calculado en App.tsx
-  const monthlySavings = selectedHybrid.savings;
-  // Cálculo: Ahorro Anual (Soles) = Ahorro Mensual * 12
-  const annualSavings = Math.max(0, monthlySavings * 12); // [cite: 46]
-
-  // Cálculo: Gasto Mensual del Híbrido = Gasto Inicial - Ahorro Mensual
-  // Usamos el gasto inicial del auto del usuario (monthlyExpense) para el cálculo del híbrido.
-  // Aunque formData no se pasa, asumiremos que el gasto inicial se puede acceder desde calculatedData
-  // Nota: Necesitamos que calculatedData.monthlyExpense sea el gasto inicial del usuario.
-  // Vamos a buscar el gasto inicial del usuario de una manera robusta:
-  const initialMonthlyExpense = calculatedData.monthlyDistance / calculatedData.currentFuelEfficiency * calculatedData.config.fuelPricePerLiter;
-  // Esto es técnicamente lo que el usuario ingresó, pero recalculado.
-  // Para simplificar y mantener la consistencia con el flujo:
-  // **Suposición:** Necesitas el valor original ingresado por el usuario. **DEBEMOS corregir `App.tsx` para incluir este valor.** // --- Solución Temporal y Adaptación ---
-  // Usaremos el gasto inicial del usuario que el App.tsx debe haber usado:
-  // El gasto inicial es el dinero que gastó para recorrer 'monthlyDistance' en su coche.
-  const currentMonthlyExpense = initialMonthlyExpense;
-
-  // Gasto Mensual Estimado del Híbrido (para recorrer la misma distancia)
-  const hybridMonthlyExpense = currentMonthlyExpense - monthlySavings; // [cite: 38]
-
-
-  // 🔑 ADAPTACIÓN DE NOMBRES DE LA DB (Deep Join)
-  const brandName = selectedHybrid.models.brands.name;
-  const modelName = selectedHybrid.models.name;
-  const variantName = selectedHybrid.specific_version;
-  // Nombre del coche del usuario que ya se corrigió en StepTwo
-  const currentCarName = calculatedData.currentCarName;
+  // Extraer datos del híbrido seleccionado
+  const brandName = selectedHybrid.models.brands.name
+  const modelName = selectedHybrid.models.name
+  const variantName = selectedHybrid.specific_version
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
       <header className="bg-[#1e3a52] text-white py-6 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center">
-            <img src={MitsuiLogo} alt="Mitsui Logo" className="h-8 w-auto" />
+          <div className="flex items-center justify-between">
+            {/* Botón Back */}
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm">Volver</span>
+            </button>
+
+            {/* Logo centrado */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <img src={MitsuiLogo} alt="Mitsui Logo" className="h-8 w-auto" />
+            </div>
+
+            {/* Espacio para equilibrar el diseño */}
+            <div className="w-20"></div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+      <main className="flex-1 px-4 py-10">
+        <div className="max-w-5xl mx-auto">
           {/* Savings Header */}
-          <div className="text-center mb-8">
-            <p className="text-muted-foreground mb-1">Tu comparación con el Toyota</p>
-            <h1 className="text-xl md:text-2xl font-bold text-toyota-dark mb-4">
-              {brandName} {modelName} {variantName}
+          <div className="text-center mb-10">
+            <p className="text-sm tracking-wide text-gray-500 mb-3">Tu comparación con el Toyota</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-[#1e3a52] mb-2">
+              {brandName} {modelName}
             </h1>
-            <p className="text-sm text-muted-foreground mb-2">PUEDES AHORRAR HASTA [cite: 46]</p>
-            <p className="text-4xl md:text-5xl font-bold text-primary">
-              S/{" "}
-              {annualSavings.toLocaleString("es-PE", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
-            </p>
-            <p className="text-muted-foreground">al año</p>
+            <p className="text-base md:text-lg text-gray-600 font-medium">{variantName}</p>
+
+            <div className="mt-8 inline-flex flex-col items-center">
+              <span className="text-xs uppercase tracking-widest text-gray-400 mb-2">Ahorro anual estimado</span>
+              <div className="flex items-baseline gap-1 bg-green-100 border border-green-400 px-6 py-3 rounded-xl">
+                <span className="text-sm text-green-700 font-medium">S/</span>
+                <span className="text-3xl md:text-4xl font-bold text-green-600">
+                  {formatCurrency(selectedHybrid.annualSavings)}
+                </span>
+                <span className="text-sm text-green-600 font-medium ml-1">/año</span>
+              </div>
+            </div>
           </div>
 
           {/* Comparison Table */}
-          <Card className="p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="p-8 mb-10 shadow-lg border-2">
+            <h2 className="text-xl font-bold text-center text-gray-800 mb-8">Comparativa de gastos y recorrido</h2>
+
+            {/* Grid con items-stretch para altura uniforme */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
               {/* Current Vehicle (Gasolina) */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-3 h-3 rounded-full bg-muted-foreground"></div>
-                  <span className="font-semibold text-toyota-dark">{currentCarName} (gasolina) [cite: 36]</span>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3 mb-6 pb-3 border-b-2 border-gray-300">
+                  <div className="w-4 h-4 rounded-full bg-gray-600 shrink-0"></div>
+                  <span className="font-bold text-lg text-gray-800">{calculatedData.currentCarName}</span>
+                  <span className="text-sm bg-gray-100 px-2 py-1 rounded text-gray-700 whitespace-nowrap">Gasolina</span>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">Gasto mensual estimado [cite: 39]</span>
-                    <span className="font-semibold">S/ {currentMonthlyExpense.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} [cite: 37]</span>
+
+                {/* Grid con filas iguales */}
+                <div className="flex-1 grid grid-rows-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center min-h-[100px]">
+                    <p className="text-sm text-gray-600 mb-1">Gasto mensual estimado</p>
+                    <p className="text-2xl font-bold text-gray-800">S/ {formatCurrency(calculatedData.monthlyExpense)}</p>
+                    <p className="text-xs text-transparent select-none mt-1" aria-hidden="true">
+                      Placeholder
+                    </p>
                   </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-muted-foreground">Recorrido [cite: 44]</span>
-                    <span className="font-semibold">
-                      {calculatedData.monthlyDistance.toLocaleString("es-PE", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      km [cite: 42]
-                    </span>
+
+                  <div className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center min-h-[100px]">
+                    <p className="text-sm text-gray-600 mb-1">Recorrido mensual</p>
+                    <p className="text-2xl font-bold text-gray-800">{formatCurrency(calculatedData.monthlyDistance)} km</p>
                   </div>
                 </div>
               </div>
 
               {/* Hybrid Vehicle */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-3 h-3 rounded-full bg-primary"></div>
-                  <span className="font-semibold text-primary">{modelName} (híbrido) [cite: 41]</span>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3 mb-6 pb-3 border-b-2 border-[#00bcd4]">
+                  <div className="w-4 h-4 rounded-full bg-[#00bcd4] shrink-0"></div>
+                  <span className="font-bold text-lg text-[#00bcd4]">{modelName}</span>
+                  <span className="text-sm bg-[#00bcd4]/10 px-2 py-1 rounded text-[#00bcd4] font-semibold whitespace-nowrap">
+                    Híbrido
+                  </span>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">Gasto mensual estimado [cite: 39]</span>
-                    <span className="font-semibold text-primary">
-                      S/{" "}
-                      {hybridMonthlyExpense.toLocaleString("es-PE", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      por mes [cite: 38]
-                    </span>
+
+                <div className="flex-1 grid grid-rows-2 gap-4">
+                  <div className="bg-[#00bcd4]/5 p-4 rounded-lg border-2 border-[#00bcd4]/20 flex flex-col justify-center min-h-[100px]">
+                    <p className="text-sm text-gray-600 mb-1">Gasto mensual estimado</p>
+                    <p className="text-2xl font-bold text-[#00bcd4]">S/ {formatCurrency(selectedHybrid.monthlySpending)}</p>
+                    <p className="text-xs text-green-700 font-semibold mt-1">
+                      Ahorras S/ {formatCurrency(selectedHybrid.savings)} al mes
+                    </p>
                   </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-muted-foreground">Recorrido [cite: 44]</span>
-                    <span className="font-semibold text-primary">
-                      {selectedHybrid.distance.toLocaleString("es-PE", {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                      })}{" "}
-                      km [cite: 43]
-                    </span>
+
+                  <div className="bg-[#00bcd4]/5 p-4 rounded-lg border-2 border-[#00bcd4]/20 flex flex-col justify-center min-h-[100px]">
+                    <p className="text-sm text-gray-600 mb-1">Recorrido con el mismo gasto</p>
+                    <p className="text-2xl font-bold text-[#00bcd4]">{formatCurrency(selectedHybrid.distance)} km</p>
                   </div>
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Benefits Section (Se mantiene igual) [cite: 47] */}
           <div className="mb-8">
-            <h2 className="text-xl font-bold text-center text-toyota-dark mb-6">¿Por qué elegir un Toyota híbrido?</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <h2 className="text-xl font-bold text-center text-toyota-dark mb-8">¿Por qué elegir un Toyota híbrido?</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {benefits.map((benefit, index) => (
-                <Card key={index} className="p-4 text-center hover:shadow-md transition-shadow">
-                  {/* 🔑 CAMBIO CLAVE: Renderizamos el componente SVG */}
-                  <benefit.icon className="h-8 w-8 mx-auto mb-3 text-primary" />
-                  <h3 className="font-semibold text-sm mb-1 text-toyota-dark">{benefit.title}</h3>
-                  <p className="text-xs text-muted-foreground">{benefit.description}</p>
+                <Card
+                  key={index}
+                  className="group relative p-6 text-center overflow-hidden border-2 border-transparent hover:border-[#00bcd4]/30 hover:shadow-lg transition-all duration-300 bg-gradient-to-b from-white to-gray-50/50"
+                >
+                  {/* Decorative background element */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500" />
+
+                  {/* Icon container with background */}
+                  <div className="relative mb-4 inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-colors duration-300">
+                    <img src={benefit.icon} className="h-12 w-12 text-[#00bcd4]" />
+                  </div>
+
+                  <h3 className="font-bold text-sm mb-2 text-toyota-dark leading-tight">{benefit.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{benefit.description}</p>
                 </Card>
               ))}
             </div>
           </div>
 
-          {/* CTA Section (Se mantiene igual) [cite: 64] */}
-          <Card className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-0">
+          {/* CTA Section */}
+          <Card className="p-8 bg-gradient-to-r from-gray-50 to-gray-100 border-2 mb-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="text-center md:text-left">
-                <p className="text-muted-foreground mb-2">¿Te gustaría conocer más sobre este modelo? [cite: 64]</p>
-                <p className="text-sm text-muted-foreground">
-                  Escanea el código QR o solicita que te contacten para una demostración. [cite: 64]
+              <div className="text-center md:text-left flex-1">
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  ¿Te gustaría conocer más sobre este modelo?
+                </h3>
+                <p className="text-gray-600">
+                  Escanea el código QR o solicita que te contacten para una demostración.
                 </p>
               </div>
               <div className="flex items-center gap-4">
-                <img src="/qr-code-toyota-hybrid.jpg" alt="Código QR" className="w-24 h-24 bg-white p-2 rounded-lg" />
+                <div className="bg-white p-4 rounded-xl shadow-md">
+                  <img
+                    src="/qr-code-toyota-hybrid.jpg"
+                    alt="Código QR"
+                    className="w-28 h-28"
+                  />
+                </div>
               </div>
             </div>
           </Card>
 
-          {/* Reset Button [cite: 65] */}
-          <div className="text-center mt-8">
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-4">
+            <Button
+              onClick={onBack}
+              variant="outline"
+              className="h-14 px-8 text-base font-semibold border-2 border-gray-300 hover:border-gray-400 rounded-full"
+            >
+              Atrás
+            </Button>
             <Button
               onClick={onReset}
-              variant="outline"
-              className="h-12 px-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-transparent"
+              className="h-14 px-12 bg-[#00bcd4] hover:bg-[#00a3b8] text-white text-lg font-bold rounded-full shadow-lg transition-all"
             >
-              Reiniciar [cite: 65]
+              Nueva comparación
             </Button>
           </div>
         </div>
       </main>
 
-      {/* Footer Disclaimer [cite: 66, 67, 68] */}
-      <footer className="py-4 px-4 text-center">
-        <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
-          * Las cifras presentadas son referenciales y pueden variar según condiciones de conducción y mantenimiento. [cite: 66] El uso de modelos de otras marcas se realiza únicamente con fines comparativos. [cite: 67] Toyota Perú no asume responsabilidad por diferencias en el consumo o rendimiento real. [cite: 68]
+      {/* Footer Disclaimer */}
+      <footer className="py-6 px-4 bg-white border-t border-gray-200">
+        <p className="text-xs text-gray-600 text-center max-w-3xl mx-auto leading-relaxed">
+          * Las cifras presentadas son referenciales y pueden variar según condiciones de conducción y
+          mantenimiento. El uso de modelos de otras marcas se realiza únicamente con fines comparativos.
+          Toyota Perú no asume responsabilidad por diferencias en el consumo o rendimiento real.
         </p>
       </footer>
     </div>
