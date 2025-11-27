@@ -96,8 +96,10 @@ function App() {
 
   return (
     <>
-      {step === 1 && <StepOne onSubmit={handleStepOneSubmit}/>}
-      {step === 2 && <StepTwo />}
+      {step === 1 && <StepOne onSubmit={handleStepOneSubmit} />}
+      {step === 2 && calculatedData && (
+        <StepTwo calculatedData={calculatedData} onSubmit={handleStepTwoSubmit} onBack={() => setStep(1)} />
+      )}
       {step === 3 && <StepThree />}
     </>
   )
