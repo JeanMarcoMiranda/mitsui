@@ -213,7 +213,7 @@ export const fetchMaxFuelEfficiencyByModelId = async (modelId: number): Promise<
 
 export const fetchGasPrice = async (): Promise<number | null> => {
     // Reutilizamos la función fetchConfigByKey, asumiendo una clave estándar.
-    const configData = await fetchConfigByKey('price_per_liter');
+    const configData = await fetchConfigByKey('FUEL_PRICE_PER_LITER');
 
     if (configData && configData.value) {
         // Aseguramos que el valor es un número para los cálculos.

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import type { FormData } from "@/App"
 import MitsuiLogo from "@/assets/mitsui_logo.svg"
 import Frase from "@/assets/frase.svg"
-import { getBrands, getModelsByBrand, type Brand, type Model } from "@/api/services/vehicleService"
+import { fetchAllBrands, fetchModelsByBrandId } from "@/api/services/vehicleService"
+import type { Brand, Model } from "@/api/types"
 
 interface StepOneProps {
     onSubmit: (data: FormData) => void
@@ -25,8 +26,10 @@ function StepOne({ onSubmit }: StepOneProps) {
     useEffect(() => {
         const fetchBrands = async () => {
             try {
-                const data = await getBrands()
-                setBrands(data)
+                const data = await fetchAllBrands()
+                if (data) {
+                    setBrands(data)
+                }
             } catch (error) {
                 console.error("Error fetching brands:", error)
             } finally {
@@ -47,8 +50,10 @@ function StepOne({ onSubmit }: StepOneProps) {
             setSelectedModel("")
             try {
                 const brandId = parseInt(selectedBrand)
-                const data = await getModelsByBrand(brandId)
-                setModels(data)
+                const data = await fetchModelsByBrandId(brandId)
+                if (data) {
+                    setModels(data)
+                }
             } catch (error) {
                 console.error("Error fetching models:", error)
                 setModels([])
@@ -60,17 +65,25 @@ function StepOne({ onSubmit }: StepOneProps) {
     }, [selectedBrand])
 
     const handleSubmit = () => {
-        if (selectedBrand && selectedModel && expense) {
-            const brandName = brands.find(b => b.id.toString() === selectedBrand)?.name || ""
-            const modelName = models.find(m => m.id.toString() === selectedModel)?.name || ""
+        const brandId = parseInt(selectedBrand)
+        const modelId = parseInt(selectedModel)
+        const monthlyExpense = Number.parseFloat(expense)
 
-            if (brandName && modelName) {
-                onSubmit({
-                    brand: brandName,
-                    model: modelName,
-                    monthlyExpense: Number.parseFloat(expense),
-                })
-            }
+        // Validamos que los IDs sean números válidos y el gasto sea positivo
+        if (
+            !isNaN(brandId) &&
+            !isNaN(modelId) &&
+            !isNaN(monthlyExpense) &&
+            monthlyExpense > 0
+        ) {
+            // 🔑 CAMBIO CLAVE: Enviamos los IDs, no los nombres
+            onSubmit({
+                brandId: brandId,
+                modelId: modelId,
+                monthlyExpense: monthlyExpense,
+            })
+        } else {
+            console.error("Datos de formulario inválidos o incompletos.")
         }
     }
 
