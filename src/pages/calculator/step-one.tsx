@@ -90,14 +90,16 @@ function StepOne({ onSubmit }: StepOneProps) {
             {/* Hero Section with Image */}
             <div className="relative w-full">
                 <div className="relative h-48 md:h-64 overflow-hidden">
-                    {/* Image placeholder - En producción aquí irá tu imagen real */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-blue-900/50 to-[#0a2540]">
+                    <div className="absolute inset-0">
                         <img
                             src="https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&q=80"
                             alt="Toyota Hybrid Vehicles"
-                            className="w-full h-full object-cover opacity-80"
+                            className="w-full h-full object-cover"
                         />
                     </div>
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a3143] via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-black/20"></div>
 
                     {/* Badge "HÍBRIDOS TOYOTA" */}
                     <div className="absolute top-2 md:top-6 left-1/2 -translate-x-1/2 z-10">
@@ -107,15 +109,14 @@ function StepOne({ onSubmit }: StepOneProps) {
             </div>
 
             {/* Main Content */}
-            <main className="flex-1 px-4 py-8 bg-[#020202]">
+            <main className="font-sans flex-1 px-4 py-8 bg-[#020202]">
                 <div className="max-w-md mx-auto">
                     {/* Title Section */}
                     <div className="text-center mb-6">
-                        <h1 className="text-2xl md:text-3xl font-semibold text-white mb-3">
+                        <h1 className="font-bold text-2xl md:text-3xl text-white mb-3">
                             Compara cuánto podrías ahorrar con un <span className="text-[#00d4ff]">Toyota híbrido</span>
                         </h1>
                     </div>
-
                     <div className="bg-[#00385e] p-6 rounded-2xl">
                         <p className="text-white/90 text-sm mb-6">
                             Responde estas dos preguntas y descubre tu ahorro en segundos.
@@ -204,7 +205,7 @@ function StepOne({ onSubmit }: StepOneProps) {
             </main>
 
             {/* Footer */}
-            <footer className="py-6 px-4 bg-[#020202]">
+            <footer className="font-sans py-6 px-4 bg-[#020202]">
                 <p className="text-xs text-white/70 text-center max-w-2xl mx-auto leading-relaxed">
                     * Los modelos de otras marcas se muestran únicamente con fines comparativos. Los cálculos son estimados y
                     tienen carácter referencial. Toyota Perú se reserva el derecho de realizar modificaciones sin previo aviso.

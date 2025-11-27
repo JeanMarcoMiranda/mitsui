@@ -1,81 +1,128 @@
 "use client"
 
 import { useState } from "react"
+
+import { fetchGasPrice, fetchHybridVersionsDetailed, fetchMaxFuelEfficiencyByModelId } from "./api/services/vehicleService"
+import type { Version } from "./api/types"
+
 import StepOne from "./pages/calculator/step-one"
 import StepTwo from "./pages/calculator/step-two"
 import StepThree from "./pages/calculator/step-three"
-import { carModels, FUEL_PRICE_PER_LITER, toyotaHybridModels } from "./lib/car-data"
 
 export interface FormData {
-  brand: string
-  model: string
-  monthlyExpense: number
+  brandId: number // ID de la marca seleccionada
+  modelId: number // ID del modelo seleccionado
+  monthlyExpense: number // Gasto mensual en Soles
+}
+
+interface HybridComparison extends Version {
+  // Usamos 'any' o un tipo específico, ya que viene de un deep join
+  models: {
+    id: number;
+    name: string; // Nombre del modelo
+    brands: {
+      name: string; // Nombre de la marca
+    }
+  }
+  distance: number;
+  savings: number;
 }
 
 export interface CalculatedData {
-  currentCarName: string
-  currentFuelEfficiency: number
-  monthlyDistance: number
-  hybridComparisons: {
-    id: string
-    name: string
-    variant: string
-    distance: number
-    savings: number
-    image: string
-  }[]
+  currentCarName: string // Nombre de la marca y modelo del usuario
+  currentFuelEfficiency: number // Rendimiento (km/galón) del auto del usuario
+  monthlyDistance: number // Distancia mensual recorrida por el auto actual
+  hybridComparisons: HybridComparison[]
+  gasPricePerLiter: number // Precio de la gasolina (necesario para la UI)
 }
 
 function App() {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState<FormData>({
-    brand: "",
-    model: "",
+    brandId: 0,
+    modelId: 0,
     monthlyExpense: 0,
   })
   const [calculatedData, setCalculatedData] = useState<CalculatedData | null>(null)
   const [selectedHybrid, setSelectedHybrid] = useState<string>("")
+  const [error, setError] = useState<string | null>(null) // Para manejar errores
 
-  const calculateData = (data: FormData): CalculatedData => {
-    const brandModels = carModels[data.brand] || []
-    const selectedModel = brandModels.find((m) => m.id === data.model)
-    const currentFuelEfficiency = selectedModel?.fuelEfficiency || 13.0
+  // 🔄 La función de cálculo ahora es asíncrona
+  const calculateData = async (data: FormData): Promise<CalculatedData | null> => {
+    // 1. Obtener datos clave de la DB
+    const [
+      maxCurrentFuelEfficiency, // 👈 Ahora obtenemos el valor máximo directamente
+      hybridVersionsRaw,
+      gasPrice
+    ] = await Promise.all([
+      // 🔑 CAMBIO CLAVE: Usamos la nueva función con modelId
+      fetchMaxFuelEfficiencyByModelId(data.modelId),
+      fetchHybridVersionsDetailed(),
+      fetchGasPrice()
+    ]);
 
-    // Calcular distancia mensual con el auto actual
-    const litersPerMonth = data.monthlyExpense / FUEL_PRICE_PER_LITER
+    // Manejo de datos insuficientes
+    // Verificamos que el rendimiento del auto del usuario sea un valor positivo
+    if (!maxCurrentFuelEfficiency || !hybridVersionsRaw || !gasPrice || maxCurrentFuelEfficiency <= 0) {
+      setError("Faltan datos clave (rendimiento, híbridos o precio de gasolina) de la base de datos, o el rendimiento del auto del usuario es inválido.")
+      return null;
+    }
+
+    // Convertir el rendimiento máximo a número (aunque la función ya lo hace, es una buena práctica)
+    const currentFuelEfficiency = Number(maxCurrentFuelEfficiency);
+
+    // 2. Cálculo de la distancia mensual con el auto actual (en Km)
+    // Fórmula: Litros = Gasto / PrecioLitro; Distancia = Litros * Rendimiento(Km/Litro)
+    const litersPerMonth = data.monthlyExpense / gasPrice
     const monthlyDistance = litersPerMonth * currentFuelEfficiency
 
-    // Calcular comparaciones con híbridos Toyota
-    const hybridComparisons = toyotaHybridModels.map((hybrid) => {
-      const hybridDistance = litersPerMonth * hybrid.fuelEfficiency
-      const savings = data.monthlyExpense - (monthlyDistance / hybrid.fuelEfficiency) * FUEL_PRICE_PER_LITER
+    // 3. Cálculo de las comparaciones con híbridos
+    const hybridComparisons = hybridVersionsRaw.map((hybrid: any) => {
+      const hybridFuelEfficiency = Number(hybrid.km_per_gallon);
+
+      // ... (El resto de la lógica de comparación se mantiene igual) ...
+      // Distancia que el híbrido recorre con el MISMO GASTO mensual
+      const hybridDistance = litersPerMonth * hybridFuelEfficiency;
+
+      // Gasto Equivalente: Gasto del híbrido para recorrer la 'monthlyDistance' del auto actual
+      // GastoEquiv = (Distancia / RendimientoHíbrido) * PrecioLitro
+      const equivalentHybridExpense = (monthlyDistance / hybridFuelEfficiency) * gasPrice;
+
+      // Ahorro: Gasto Actual - Gasto Equivalente del Híbrido
+      const savings = data.monthlyExpense - equivalentHybridExpense;
 
       return {
-        id: hybrid.id,
-        name: hybrid.name,
-        variant: hybrid.variant,
+        ...hybrid,
         distance: hybridDistance,
-        savings: Math.max(0, savings),
-        image: hybrid.image,
-      }
-    })
+        savings: Math.max(0, savings), // Asegura que el ahorro no sea negativo
+      } as HybridComparison;
+    });
 
-    const brandName = data.brand.charAt(0).toUpperCase() + data.brand.slice(1)
-    const modelName = selectedModel?.name || "Auto"
+    // 4. Nombre del coche del usuario (provisional)
+    const currentCarName = `Coche ID: ${data.brandId}-${data.modelId} (Mejor Rendimiento)`;
 
     return {
-      currentCarName: `${brandName} ${modelName}`,
+      currentCarName,
       currentFuelEfficiency,
       monthlyDistance,
       hybridComparisons,
+      gasPricePerLiter: gasPrice,
     }
   }
 
-  const handleStepOneSubmit = (data: FormData) => {
+  const handleStepOneSubmit = async (data: FormData) => {
+    setError(null)
     setFormData(data)
-    const calculated = calculateData(data)
-    setCalculatedData(calculated)
-    setStep(2)
+
+    const calculated = await calculateData(data)
+
+    if (calculated) {
+      setCalculatedData(calculated)
+      setStep(2)
+    } else {
+      // El error ya fue registrado en setError dentro de calculateData
+      console.error("No se pudo completar el cálculo.")
+    }
   }
 
   const handleStepTwoSubmit = (hybridId: string) => {
@@ -86,12 +133,23 @@ function App() {
   const handleReset = () => {
     setStep(1)
     setFormData({
-      brand: "",
-      model: "",
+      brandId: 0,
+      modelId: 0,
       monthlyExpense: 0,
     })
     setCalculatedData(null)
     setSelectedHybrid("")
+    setError(null)
+  }
+
+  if (error) {
+    return (
+      <div className="p-10 text-center bg-red-100 text-red-800">
+        <p>Ocurrió un error crítico:</p>
+        <p className="font-mono">{error}</p>
+        <button onClick={handleReset} className="mt-4 p-2 bg-red-500 text-white rounded">Reiniciar</button>
+      </div>
+    )
   }
 
   return (
