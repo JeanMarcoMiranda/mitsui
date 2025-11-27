@@ -2,7 +2,13 @@
 
 import { useState } from "react"
 
-import { fetchGasPrice, fetchHybridVersionsDetailed, fetchMaxFuelEfficiencyByModelId } from "./api/services/vehicleService"
+import {
+  fetchGasPrice,
+  fetchHybridVersionsDetailed,
+  fetchMaxFuelEfficiencyByModelId,
+  fetchBrandNameById,
+  fetchModelNameById
+} from "./api/services/vehicleService"
 import type { Version } from "./api/types"
 
 import StepOne from "./pages/calculator/step-one"
@@ -53,12 +59,16 @@ function App() {
     const [
       maxCurrentFuelEfficiency, // 👈 Ahora obtenemos el valor máximo directamente
       hybridVersionsRaw,
-      gasPrice
+      gasPrice,
+      brandName,
+      modelName
     ] = await Promise.all([
       // 🔑 CAMBIO CLAVE: Usamos la nueva función con modelId
       fetchMaxFuelEfficiencyByModelId(data.modelId),
       fetchHybridVersionsDetailed(),
-      fetchGasPrice()
+      fetchGasPrice(),
+      fetchBrandNameById(data.brandId),
+      fetchModelNameById(data.modelId)
     ]);
 
     // Manejo de datos insuficientes
@@ -98,8 +108,7 @@ function App() {
       } as HybridComparison;
     });
 
-    // 4. Nombre del coche del usuario (provisional)
-    const currentCarName = `Coche ID: ${data.brandId}-${data.modelId} (Mejor Rendimiento)`;
+    const currentCarName = `${brandName} ${modelName}`;
 
     return {
       currentCarName,

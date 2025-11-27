@@ -223,3 +223,36 @@ export const fetchGasPrice = async (): Promise<number | null> => {
     console.warn("La clave 'price_per_liter' no se encontró o no tiene un valor válido en la tabla 'config'.");
     return null;
 };
+
+export const fetchBrandNameById = async (brandId: number): Promise<string | null> => {
+    const { data, error } = await supabase
+        .from('brands')
+        .select('name')
+        .eq('id', brandId)
+        .single();
+
+    if (error && error.code !== 'PGRST116') {
+        console.error(`Error al obtener el nombre de la marca ${brandId}:`, error.message);
+        return null;
+    }
+    
+    return data?.name || null;
+};
+
+/**
+ * Obtiene el nombre de un modelo por su ID.
+ */
+export const fetchModelNameById = async (modelId: number): Promise<string | null> => {
+    const { data, error } = await supabase
+        .from('models')
+        .select('name')
+        .eq('id', modelId)
+        .single();
+
+    if (error && error.code !== 'PGRST116') {
+        console.error(`Error al obtener el nombre del modelo ${modelId}:`, error.message);
+        return null;
+    }
+    
+    return data?.name || null;
+};
