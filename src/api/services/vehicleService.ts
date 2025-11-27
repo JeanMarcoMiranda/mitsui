@@ -1,19 +1,20 @@
+
 import { supabase } from '../supabaseClient';
 import type { Brand, Model, Version, Config } from '../types';
 
 // =================================================================
-// 🚗 Funciones para la tabla 'brands' (Marcas)
+// 🚗 BRANDS - Funciones para la tabla 'brands'
 // =================================================================
 
 /**
- * Obtiene todas las marcas.
- * @returns Una promesa con un array de objetos Brand o null en caso de error.
+ * Obtiene todas las marcas ordenadas alfabéticamente.
  */
 export const fetchAllBrands = async (): Promise<Brand[] | null> => {
   const { data, error } = await supabase
     .from('brands')
-    .select('id, name') // Especificamos las columnas a traer
-    .returns<Brand[]>(); // Usamos el tipo TypeScript
+    .select('id, name')
+    .order('name', { ascending: true })
+    .returns<Brand[]>();
 
   if (error) {
     console.error('Error al obtener las marcas:', error.message);
@@ -24,65 +25,36 @@ export const fetchAllBrands = async (): Promise<Brand[] | null> => {
 };
 
 /**
- * Agrega una nueva marca.
- * @param name El nombre de la nueva marca.
- * @returns Una promesa con el objeto Brand creado o null en caso de error.
+ * Obtiene el nombre de una marca por su ID.
  */
-export const addBrand = async (name: string): Promise<Brand | null> => {
+export const fetchBrandNameById = async (brandId: number): Promise<string | null> => {
   const { data, error } = await supabase
     .from('brands')
-    .insert({ name })
-    .select() // Pide que devuelva el registro insertado
-    .single(); // Espera un solo registro
+    .select('name')
+    .eq('id', brandId)
+    .single();
 
-  if (error) {
-    console.error('Error al agregar la marca:', error.message);
+  if (error && error.code !== 'PGRST116') {
+    console.error(`Error al obtener el nombre de la marca ${brandId}:`, error.message);
     return null;
   }
 
-  return data as Brand;
+  return data?.name || null;
 };
 
 // =================================================================
-// 🚗 Funciones para la tabla 'models' (Modelos)
+// 🚗 MODELS - Funciones para la tabla 'models'
 // =================================================================
 
 /**
- * Obtiene todos los modelos, incluyendo el nombre de la marca (JOIN).
- * @returns Una promesa con un array de modelos extendidos.
- */
-export const fetchAllModelsWithBrand = async (): Promise<(Model & { brand_name: string })[] | null> => {
-  // Usamos 'select' para hacer un JOIN implícito.
-  // brands(name) significa que queremos el 'name' de la tabla 'brands'
-  const { data, error } = await supabase
-    .from('models')
-    .select('id, name, brand_id, brands(name)')
-    .returns<Model[]>(); // El tipo de retorno es más complejo debido al JOIN
-
-  if (error) {
-    console.error('Error al obtener los modelos:', error.message);
-    return null;
-  }
-
-  // Mapeamos los datos para aplanar el objeto de la marca
-  const modelsWithBrand = data?.map((model: any) => ({
-    id: model.id,
-    name: model.name,
-    brand_id: model.brand_id,
-    brand_name: model.brands.name, // Accede al nombre de la marca
-  })) || null;
-
-  return modelsWithBrand;
-};
-
-/**
- * Obtiene modelos por ID de marca.
+ * Obtiene modelos por ID de marca, ordenados alfabéticamente.
  */
 export const fetchModelsByBrandId = async (brandId: number): Promise<Model[] | null> => {
   const { data, error } = await supabase
     .from('models')
     .select('*')
-    .eq('brand_id', brandId) // Filtra donde brand_id es igual al valor
+    .eq('brand_id', brandId)
+    .order('name', { ascending: true })
     .returns<Model[]>();
 
   if (error) {
@@ -93,39 +65,78 @@ export const fetchModelsByBrandId = async (brandId: number): Promise<Model[] | n
   return data;
 };
 
+/**
+ * Obtiene el nombre de un modelo por su ID.
+ */
+export const fetchModelNameById = async (modelId: number): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from('models')
+    .select('name')
+    .eq('id', modelId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error(`Error al obtener el nombre del modelo ${modelId}:`, error.message);
+    return null;
+  }
+
+  return data?.name || null;
+};
 
 // =================================================================
-// 🚗 Funciones para la tabla 'versions' (Versiones)
+// 🚗 VERSIONS - Funciones para la tabla 'versions'
 // =================================================================
 
 /**
- * Obtiene todas las versiones de coches con su modelo y marca. (Deep JOIN)
- * @returns Una promesa con un array de versiones extendidas.
+ * Obtiene el rendimiento máximo (km/galón) para un modelo específico.
+ * Útil para calcular el consumo del vehículo del usuario.
  */
-export const fetchAllVersionsDetailed = async (): Promise<any[] | null> => {
-  // Usamos 'select' para hacer un JOIN múltiple (Deep JOIN):
-  // models(name, brands(name)) -> Trae name de models, y dentro de models, trae name de brands
+export const fetchMaxFuelEfficiencyByModelId = async (modelId: number): Promise<number | null> => {
+  const { data, error } = await supabase
+    .from('versions')
+    .select('km_per_gallon')
+    .eq('model_id', modelId)
+    .order('km_per_gallon', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error(`Error al obtener el rendimiento máximo para el modelo ${modelId}:`, error.message);
+    return null;
+  }
+
+  return data?.km_per_gallon ? Number(data.km_per_gallon) : null;
+};
+
+/**
+ * Obtiene todas las versiones híbridas de Toyota con detalles completos.
+ * Incluye: marca, modelo, rendimiento e imagen.
+ * CLAVE para mostrar las 4 opciones híbridas en la pantalla 2.
+ */
+export const fetchToyotaHybridVersions = async (): Promise<any[] | null> => {
   const { data, error } = await supabase
     .from('versions')
     .select(`
-            id,
-            specific_version,
-            km_per_gallon,
-            is_hybrid,
-            image_url,
-            models (
-                id,
-                name,
-                brands (
-                    name
-                )
-            )
-        `);
-  // Nota: Para Deep JOINs, el tipado con .returns<T> puede ser complicado. 
-  // Se recomienda tipar el resultado después de la consulta (lo manejamos con 'any' temporalmente).
+      id,
+      specific_version,
+      km_per_gallon,
+      is_hybrid,
+      image_url,
+      models!inner (
+        id,
+        name,
+        brands!inner (
+          id,
+          name
+        )
+      )
+    `)
+    .eq('is_hybrid', true)
+    .eq('models.brands.name', 'Toyota') // Filtro adicional para solo Toyota
+    .order('km_per_gallon', { ascending: false }); // Mejor rendimiento primero
 
   if (error) {
-    console.error('Error al obtener las versiones detalladas:', error.message);
+    console.error('Error al obtener las versiones híbridas de Toyota:', error.message);
     return null;
   }
 
@@ -133,23 +144,20 @@ export const fetchAllVersionsDetailed = async (): Promise<any[] | null> => {
 };
 
 // =================================================================
-// 🚗 Funciones para la tabla 'config' (Configuración)
+// 🚗 CONFIG - Funciones para la tabla 'config'
 // =================================================================
 
 /**
  * Obtiene el valor de una clave de configuración específica.
- * @param key La clave de configuración.
- * @returns Una promesa con el objeto Config o null.
  */
 export const fetchConfigByKey = async (key: string): Promise<Config | null> => {
   const { data, error } = await supabase
     .from('config')
     .select('*')
     .eq('key', key)
-    .returns<Config>()
     .single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 es "no rows found" (no se encontraron filas)
+  if (error && error.code !== 'PGRST116') {
     console.error(`Error al obtener la configuración ${key}:`, error.message);
     return null;
   }
@@ -157,102 +165,85 @@ export const fetchConfigByKey = async (key: string): Promise<Config | null> => {
   return data;
 };
 
+/**
+ * Obtiene el precio de la gasolina por litro desde la configuración.
+ * CLAVE para todos los cálculos de ahorro.
+ */
+export const fetchGasPrice = async (): Promise<number | null> => {
+  const configData = await fetchConfigByKey('FUEL_PRICE_PER_LITER');
 
-export const fetchHybridVersionsDetailed = async (): Promise<any[] | null> => {
-  // Usamos 'select' para el Deep JOIN como en la función anterior,
-  // pero agregamos el filtro usando .eq()
-  const { data, error } = await supabase
-    .from('versions')
-    .select(`
-            id,
-            specific_version,
-            km_per_gallon,
-            is_hybrid,
-            image_url,
-            models (
-                id,
-                name,
-                brands (
-                    name
-                )
-            )
-        `)
-    .eq('is_hybrid', true); // <-- FILTRO CLAVE: donde is_hybrid sea TRUE
-
-  if (error) {
-    console.error('Error al obtener las versiones híbridas detalladas:', error.message);
-    return null;
+  if (configData?.value) {
+    return Number(configData.value);
   }
 
-  return data;
+  console.warn("La clave 'FUEL_PRICE_PER_LITER' no se encontró en la tabla 'config'.");
+  return null;
 };
 
-export const fetchMaxFuelEfficiencyByModelId = async (modelId: number): Promise<number | null> => {
-    // Usamos la función de agregación 'max' de PostgREST
-    const { data, error } = await supabase
-        .from('versions')
-        .select('km_per_gallon') // Solo necesitamos esta columna
-        .eq('model_id', modelId) // Filtramos por el modelo seleccionado por el usuario
-        .order('km_per_gallon', { ascending: false }) // Ordenamos de mayor a menor
-        .limit(1) // Solo traemos el primer (el mayor) resultado
-        .single(); // Esperamos un solo resultado (el máximo)
+// =================================================================
+// 🧮 CÁLCULOS - Funciones de negocio para el comparador
+// =================================================================
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 es "no rows found"
-        console.error(`Error al obtener el rendimiento máximo para el modelo ${modelId}:`, error.message);
-        return null;
-    }
-    
-    // El resultado viene en un objeto { km_per_gallon: value }
-    if (data && data.km_per_gallon) {
-        return Number(data.km_per_gallon);
-    }
-
-    // Si no se encontraron versiones o el rendimiento es nulo
-    return null;
-};
-
-export const fetchGasPrice = async (): Promise<number | null> => {
-    // Reutilizamos la función fetchConfigByKey, asumiendo una clave estándar.
-    const configData = await fetchConfigByKey('FUEL_PRICE_PER_LITER');
-
-    if (configData && configData.value) {
-        // Aseguramos que el valor es un número para los cálculos.
-        return Number(configData.value); 
-    }
-    
-    console.warn("La clave 'price_per_liter' no se encontró o no tiene un valor válido en la tabla 'config'.");
-    return null;
-};
-
-export const fetchBrandNameById = async (brandId: number): Promise<string | null> => {
-    const { data, error } = await supabase
-        .from('brands')
-        .select('name')
-        .eq('id', brandId)
-        .single();
-
-    if (error && error.code !== 'PGRST116') {
-        console.error(`Error al obtener el nombre de la marca ${brandId}:`, error.message);
-        return null;
-    }
-    
-    return data?.name || null;
+/**
+ * Calcula los kilómetros mensuales que recorre el usuario.
+ * @param monthlySpending Gasto mensual en soles
+ * @param pricePerLiter Precio por litro de gasolina
+ * @param kmPerGallon Rendimiento del vehículo (km/galón)
+ * @returns Kilómetros mensuales
+ */
+export const calculateMonthlyKm = (
+  monthlySpending: number,
+  pricePerLiter: number,
+  kmPerGallon: number
+): number => {
+  const LITERS_PER_GALLON = 3.78541; // Conversión estándar
+  const pricePerGallon = pricePerLiter * LITERS_PER_GALLON;
+  const gallonsPerMonth = monthlySpending / pricePerGallon;
+  return gallonsPerMonth * kmPerGallon;
 };
 
 /**
- * Obtiene el nombre de un modelo por su ID.
+ * Calcula cuántos km puede recorrer un híbrido con el mismo gasto.
+ * @param monthlySpending Gasto mensual en soles
+ * @param pricePerLiter Precio por litro de gasolina
+ * @param hybridKmPerGallon Rendimiento del híbrido (km/galón)
+ * @returns Kilómetros que recorrería el híbrido
  */
-export const fetchModelNameById = async (modelId: number): Promise<string | null> => {
-    const { data, error } = await supabase
-        .from('models')
-        .select('name')
-        .eq('id', modelId)
-        .single();
+export const calculateHybridKm = (
+  monthlySpending: number,
+  pricePerLiter: number,
+  hybridKmPerGallon: number
+): number => {
+  return calculateMonthlyKm(monthlySpending, pricePerLiter, hybridKmPerGallon);
+};
 
-    if (error && error.code !== 'PGRST116') {
-        console.error(`Error al obtener el nombre del modelo ${modelId}:`, error.message);
-        return null;
-    }
-    
-    return data?.name || null;
+/**
+ * Calcula el gasto mensual del híbrido para recorrer los mismos km del usuario.
+ * @param userMonthlyKm Kilómetros mensuales del usuario
+ * @param pricePerLiter Precio por litro de gasolina
+ * @param hybridKmPerGallon Rendimiento del híbrido (km/galón)
+ * @returns Gasto mensual en soles
+ */
+export const calculateHybridMonthlySpending = (
+  userMonthlyKm: number,
+  pricePerLiter: number,
+  hybridKmPerGallon: number
+): number => {
+  const LITERS_PER_GALLON = 3.78541;
+  const pricePerGallon = pricePerLiter * LITERS_PER_GALLON;
+  const gallonsNeeded = userMonthlyKm / hybridKmPerGallon;
+  return gallonsNeeded * pricePerGallon;
+};
+
+/**
+ * Calcula el ahorro mensual al cambiar a un híbrido.
+ * @param userMonthlySpending Gasto mensual actual del usuario
+ * @param hybridMonthlySpending Gasto mensual con el híbrido
+ * @returns Ahorro mensual en soles
+ */
+export const calculateMonthlySavings = (
+  userMonthlySpending: number,
+  hybridMonthlySpending: number
+): number => {
+  return userMonthlySpending - hybridMonthlySpending;
 };
