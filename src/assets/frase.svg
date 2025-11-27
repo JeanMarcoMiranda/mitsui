@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="76" viewBox="0 0 340 76">
+  <g id="Grupo_8" data-name="Grupo 8" transform="translate(-198.6 -118.995)">
+    <rect id="Rectángulo_46" data-name="Rectángulo 46" width="169" height="41" transform="translate(369.6 128.995)" fill="#00459d"/>
+    <rect id="Rectángulo_47" data-name="Rectángulo 47" width="183" height="41" transform="translate(198.6 118.995)" fill="#0068d0"/>
+    <text id="híbridos" transform="translate(290.6 149.995)" fill="#fff" font-size="30" font-family="Montserrat-ExtraBold, Montserrat" font-weight="800" letter-spacing="-0.005em"><tspan x="-79.155" y="0">HÍBRIDOS</tspan></text>
+    <text id="la_mejor_desición" data-name="la mejor desición" transform="translate(368.6 189.995)" fill="#0068d0" font-size="20" font-family="Montserrat-SemiBold, Montserrat" font-weight="600" letter-spacing="0.284em"><tspan x="-153.16" y="0">LA MEJOR </tspan><tspan y="0" font-family="Montserrat-SemiBoldItalic, Montserrat" font-style="italic">DESICIÓN</tspan></text>
+    <text id="toyota" transform="translate(453.6 157.995)" fill="#fff" font-size="29" font-family="Montserrat-ExtraBold, Montserrat" font-weight="800" letter-spacing="-0.005em"><tspan x="-62.365" y="0">TOYOTA</tspan></text>
+  </g>
+</svg>
