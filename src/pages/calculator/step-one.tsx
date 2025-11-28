@@ -13,6 +13,10 @@ interface StepOneProps {
     onSubmit: (data: FormData) => void
 }
 
+/**
+ * Primer paso de la calculadora: recopila la marca, el modelo actual del usuario
+ * y su gasto mensual en combustible.
+ */
 function StepOne({ onSubmit }: StepOneProps) {
     const [brands, setBrands] = useState<Brand[]>([])
     const [models, setModels] = useState<Model[]>([])
@@ -23,6 +27,9 @@ function StepOne({ onSubmit }: StepOneProps) {
     const [selectedModel, setSelectedModel] = useState("")
     const [expense, setExpense] = useState("")
 
+    /**
+     * Efecto para cargar todas las marcas al montar el componente.
+     */
     useEffect(() => {
         const fetchBrands = async () => {
             try {
@@ -39,6 +46,9 @@ function StepOne({ onSubmit }: StepOneProps) {
         fetchBrands()
     }, [])
 
+    /**
+     * Efecto para cargar los modelos asociados cuando se selecciona una nueva marca.
+     */
     useEffect(() => {
         if (!selectedBrand) {
             setModels([])
@@ -47,7 +57,7 @@ function StepOne({ onSubmit }: StepOneProps) {
 
         const fetchModels = async () => {
             setLoadingModels(true)
-            setSelectedModel("")
+            setSelectedModel("") // Limpiar el modelo seleccionado al cambiar de marca
             try {
                 const brandId = parseInt(selectedBrand)
                 const data = await fetchModelsByBrandId(brandId)
@@ -69,14 +79,13 @@ function StepOne({ onSubmit }: StepOneProps) {
         const modelId = parseInt(selectedModel)
         const monthlyExpense = Number.parseFloat(expense)
 
-        // Validamos que los IDs sean números válidos y el gasto sea positivo
+        // Validar que todos los campos sean números válidos y el gasto sea positivo.
         if (
             !isNaN(brandId) &&
             !isNaN(modelId) &&
             !isNaN(monthlyExpense) &&
             monthlyExpense > 0
         ) {
-            // 🔑 CAMBIO CLAVE: Enviamos los IDs, no los nombres
             onSubmit({
                 brandId: brandId,
                 modelId: modelId,
@@ -91,7 +100,7 @@ function StepOne({ onSubmit }: StepOneProps) {
 
     return (
         <div className="min-h-screen flex flex-col bg-[#0a2540]">
-            {/* Header */}
+            {/* Header: Contiene el logo de la marca. */}
             <header className="bg-[#1e3a52] text-white py-5 px-4">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex items-center justify-center">
@@ -102,7 +111,7 @@ function StepOne({ onSubmit }: StepOneProps) {
                 </div>
             </header>
 
-            {/* Hero Section with Image */}
+            {/* Hero Section: Imagen de fondo y frase promocional. */}
             <div className="relative w-full">
                 <div className="relative h-48 md:h-64 overflow-hidden">
                     <div className="absolute inset-0">
@@ -116,17 +125,15 @@ function StepOne({ onSubmit }: StepOneProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a3143] via-transparent to-transparent"></div>
                     <div className="absolute inset-0 bg-black/20"></div>
 
-                    {/* Badge "HÍBRIDOS TOYOTA" */}
                     <div className="absolute top-2 md:top-6 left-1/2 -translate-x-1/2 z-10">
                         <img src={Frase} alt="Frase" className="h-20 w-auto" />
                     </div>
                 </div>
             </div>
 
-            {/* Main Content */}
+            {/* Main Content: Título y formulario. */}
             <main className="font-sans flex-1 px-4 py-8 bg-[#020202]">
                 <div className="max-w-md mx-auto">
-                    {/* Title Section */}
                     <div className="text-center mb-6">
                         <h1 className="font-bold text-2xl md:text-3xl text-white mb-3">
                             Compara cuánto podrías ahorrar con un <span className="text-[#00d4ff]">Toyota híbrido</span>
@@ -136,15 +143,14 @@ function StepOne({ onSubmit }: StepOneProps) {
                         <p className="text-white/90 text-sm mb-6">
                             Responde estas dos preguntas y descubre tu ahorro en segundos.
                         </p>
-                        {/* Form Card */}
+                        {/* Form Card: Contiene los campos de selección e ingreso. */}
                         <div className="bg-white rounded-2xl p-6 shadow-xl space-y-5">
-                            {/* Brand and Model Section */}
                             <div className="space-y-3">
                                 <Label htmlFor="brand" className="text-[#0a2540] text-base font-semibold">
                                     ¿Qué modelo es tu auto o camioneta?
                                 </Label>
 
-                                {/* Brand Select */}
+                                {/* Select de Marca */}
                                 <Select
                                     value={selectedBrand}
                                     onValueChange={(val) => {
@@ -168,7 +174,7 @@ function StepOne({ onSubmit }: StepOneProps) {
                                     </SelectContent>
                                 </Select>
 
-                                {/* Model Select */}
+                                {/* Select de Modelo (dependiente de la marca) */}
                                 <Select
                                     value={selectedModel}
                                     onValueChange={setSelectedModel}
@@ -187,7 +193,7 @@ function StepOne({ onSubmit }: StepOneProps) {
                                 </Select>
                             </div>
 
-                            {/* Monthly Expense Input */}
+                            {/* Campo de Gasto Mensual */}
                             <div className="space-y-3">
                                 <Label htmlFor="expense" className="text-[#0a2540] text-base font-semibold">
                                     ¿Cuánto gastas en gasolina al mes?
@@ -205,7 +211,7 @@ function StepOne({ onSubmit }: StepOneProps) {
                         </div>
 
                         <div className="w-full flex justify-center">
-                            {/* Submit Button */}
+                            {/* Botón de envío (habilitado solo si los datos son válidos) */}
                             <Button
                                 onClick={handleSubmit}
                                 disabled={!isValid}
@@ -219,7 +225,7 @@ function StepOne({ onSubmit }: StepOneProps) {
                 </div>
             </main>
 
-            {/* Footer */}
+            {/* Footer: Disclaimer legal. */}
             <footer className="font-sans py-6 px-4 bg-[#020202]">
                 <p className="text-xs text-white/70 text-center max-w-2xl mx-auto leading-relaxed">
                     * Los modelos de otras marcas se muestran únicamente con fines comparativos. Los cálculos son estimados y
