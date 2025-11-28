@@ -1,13 +1,9 @@
-
 import { supabase } from '../supabaseClient';
 import type { Brand, Model, Version, Config } from '../types';
 
-// =================================================================
-// 🚗 BRANDS - Funciones para la tabla 'brands'
-// =================================================================
-
 /**
- * Obtiene todas las marcas ordenadas alfabéticamente.
+ * Obtiene todas las marcas de vehículos disponibles, ordenadas alfabéticamente.
+ * @returns Lista de marcas o null si hay un error.
  */
 export const fetchAllBrands = async (): Promise<Brand[] | null> => {
   const { data, error } = await supabase
@@ -25,7 +21,9 @@ export const fetchAllBrands = async (): Promise<Brand[] | null> => {
 };
 
 /**
- * Obtiene el nombre de una marca por su ID.
+ * Obtiene el nombre completo de una marca por su ID.
+ * @param brandId ID de la marca.
+ * @returns Nombre de la marca o null si no se encuentra.
  */
 export const fetchBrandNameById = async (brandId: number): Promise<string | null> => {
   const { data, error } = await supabase
@@ -34,6 +32,7 @@ export const fetchBrandNameById = async (brandId: number): Promise<string | null
     .eq('id', brandId)
     .single();
 
+  // Ignoramos el error PGRST116 (No se encontraron filas)
   if (error && error.code !== 'PGRST116') {
     console.error(`Error al obtener el nombre de la marca ${brandId}:`, error.message);
     return null;
@@ -42,12 +41,10 @@ export const fetchBrandNameById = async (brandId: number): Promise<string | null
   return data?.name || null;
 };
 
-// =================================================================
-// 🚗 MODELS - Funciones para la tabla 'models'
-// =================================================================
-
 /**
- * Obtiene modelos por ID de marca, ordenados alfabéticamente.
+ * Obtiene modelos asociados a un ID de marca, ordenados alfabéticamente.
+ * @param brandId ID de la marca.
+ * @returns Lista de modelos o null si hay un error.
  */
 export const fetchModelsByBrandId = async (brandId: number): Promise<Model[] | null> => {
   const { data, error } = await supabase
@@ -66,7 +63,9 @@ export const fetchModelsByBrandId = async (brandId: number): Promise<Model[] | n
 };
 
 /**
- * Obtiene el nombre de un modelo por su ID.
+ * Obtiene el nombre completo de un modelo por su ID.
+ * @param modelId ID del modelo.
+ * @returns Nombre del modelo o null si no se encuentra.
  */
 export const fetchModelNameById = async (modelId: number): Promise<string | null> => {
   const { data, error } = await supabase
@@ -75,6 +74,7 @@ export const fetchModelNameById = async (modelId: number): Promise<string | null
     .eq('id', modelId)
     .single();
 
+  // Ignoramos el error PGRST116 (No se encontraron filas)
   if (error && error.code !== 'PGRST116') {
     console.error(`Error al obtener el nombre del modelo ${modelId}:`, error.message);
     return null;
@@ -83,13 +83,11 @@ export const fetchModelNameById = async (modelId: number): Promise<string | null
   return data?.name || null;
 };
 
-// =================================================================
-// 🚗 VERSIONS - Funciones para la tabla 'versions'
-// =================================================================
-
 /**
- * Obtiene el rendimiento máximo (km/galón) para un modelo específico.
- * Útil para calcular el consumo del vehículo del usuario.
+ * Obtiene el mejor rendimiento de combustible (km/galón) registrado para un modelo.
+ * Se utiliza para calcular el consumo del vehículo actual del usuario.
+ * @param modelId ID del modelo.
+ * @returns Rendimiento máximo en km/galón o null.
  */
 export const fetchMaxFuelEfficiencyByModelId = async (modelId: number): Promise<number | null> => {
   const { data, error } = await supabase
@@ -100,6 +98,7 @@ export const fetchMaxFuelEfficiencyByModelId = async (modelId: number): Promise<
     .limit(1)
     .single();
 
+  // Ignoramos el error PGRST116 (No se encontraron filas)
   if (error && error.code !== 'PGRST116') {
     console.error(`Error al obtener el rendimiento máximo para el modelo ${modelId}:`, error.message);
     return null;
@@ -109,9 +108,9 @@ export const fetchMaxFuelEfficiencyByModelId = async (modelId: number): Promise<
 };
 
 /**
- * Obtiene todas las versiones híbridas de Toyota con detalles completos.
- * Incluye: marca, modelo, rendimiento e imagen.
- * CLAVE para mostrar las 4 opciones híbridas en la pantalla 2.
+ * Obtiene todas las versiones híbridas de Toyota con datos anidados (modelo y marca).
+ * Esta información es clave para mostrar las opciones de comparación en la interfaz.
+ * @returns Lista de versiones híbridas o null si hay un error.
  */
 export const fetchToyotaHybridVersions = async (): Promise<any[] | null> => {
   const { data, error } = await supabase
@@ -132,8 +131,8 @@ export const fetchToyotaHybridVersions = async (): Promise<any[] | null> => {
       )
     `)
     .eq('is_hybrid', true)
-    .eq('models.brands.name', 'TOYOTA') // Filtro adicional para solo Toyota
-    .order('km_per_gallon', { ascending: false }); // Mejor rendimiento primero
+    .eq('models.brands.name', 'TOYOTA') // Filtra solo los vehículos de la marca Toyota.
+    .order('km_per_gallon', { ascending: false }); // Prioriza los de mejor rendimiento.
 
   if (error) {
     console.error('Error al obtener las versiones híbridas de Toyota:', error.message);
@@ -143,12 +142,10 @@ export const fetchToyotaHybridVersions = async (): Promise<any[] | null> => {
   return data;
 };
 
-// =================================================================
-// 🚗 CONFIG - Funciones para la tabla 'config'
-// =================================================================
-
 /**
- * Obtiene el valor de una clave de configuración específica.
+ * Obtiene el valor de una clave de configuración específica de la tabla 'config'.
+ * @param key Clave de configuración (e.g., 'FUEL_PRICE_PER_LITER').
+ * @returns Objeto de configuración o null si no se encuentra.
  */
 export const fetchConfigByKey = async (key: string): Promise<Config | null> => {
   const { data, error } = await supabase
@@ -157,6 +154,7 @@ export const fetchConfigByKey = async (key: string): Promise<Config | null> => {
     .eq('key', key)
     .single();
 
+  // Ignoramos el error PGRST116 (No se encontraron filas)
   if (error && error.code !== 'PGRST116') {
     console.error(`Error al obtener la configuración ${key}:`, error.message);
     return null;
@@ -166,8 +164,9 @@ export const fetchConfigByKey = async (key: string): Promise<Config | null> => {
 };
 
 /**
- * Obtiene el precio de la gasolina por litro desde la configuración.
- * CLAVE para todos los cálculos de ahorro.
+ * Obtiene el precio de la gasolina por litro desde la configuración de la base de datos.
+ * Esta función es esencial para todos los cálculos de ahorro.
+ * @returns Precio de la gasolina por litro o null si no se pudo obtener.
  */
 export const fetchGasPrice = async (): Promise<number | null> => {
   const configData = await fetchConfigByKey('FUEL_PRICE_PER_LITER');
@@ -180,34 +179,31 @@ export const fetchGasPrice = async (): Promise<number | null> => {
   return null;
 };
 
-// =================================================================
-// 🧮 CÁLCULOS - Funciones de negocio para el comparador
-// =================================================================
-
 /**
- * Calcula los kilómetros mensuales que recorre el usuario.
- * @param monthlySpending Gasto mensual en soles
- * @param pricePerLiter Precio por litro de gasolina
- * @param kmPerGallon Rendimiento del vehículo (km/galón)
- * @returns Kilómetros mensuales
+ * Calcula los kilómetros mensuales que recorre el usuario basándose en su gasto.
+ * @param monthlySpending Gasto mensual en soles.
+ * @param pricePerLiter Precio por litro de gasolina.
+ * @param kmPerGallon Rendimiento del vehículo (km/galón).
+ * @returns Kilómetros mensuales recorridos.
  */
 export const calculateMonthlyKm = (
   monthlySpending: number,
   pricePerLiter: number,
   kmPerGallon: number
 ): number => {
-  const LITERS_PER_GALLON = 3.78541; // Conversión estándar
+  const LITERS_PER_GALLON = 3.78541;
   const pricePerGallon = pricePerLiter * LITERS_PER_GALLON;
   const gallonsPerMonth = monthlySpending / pricePerGallon;
   return gallonsPerMonth * kmPerGallon;
 };
 
 /**
- * Calcula cuántos km puede recorrer un híbrido con el mismo gasto.
- * @param monthlySpending Gasto mensual en soles
- * @param pricePerLiter Precio por litro de gasolina
- * @param hybridKmPerGallon Rendimiento del híbrido (km/galón)
- * @returns Kilómetros que recorrería el híbrido
+ * Calcula la distancia total que un vehículo híbrido puede recorrer con el mismo gasto mensual del usuario.
+ * (Esta es una simple envoltura de `calculateMonthlyKm` con nombres de parámetros específicos).
+ * @param monthlySpending Gasto mensual en soles.
+ * @param pricePerLiter Precio por litro de gasolina.
+ * @param hybridKmPerGallon Rendimiento del híbrido (km/galón).
+ * @returns Kilómetros que recorrería el híbrido con el mismo gasto.
  */
 export const calculateHybridKm = (
   monthlySpending: number,
@@ -218,11 +214,11 @@ export const calculateHybridKm = (
 };
 
 /**
- * Calcula el gasto mensual del híbrido para recorrer los mismos km del usuario.
- * @param userMonthlyKm Kilómetros mensuales del usuario
- * @param pricePerLiter Precio por litro de gasolina
- * @param hybridKmPerGallon Rendimiento del híbrido (km/galón)
- * @returns Gasto mensual en soles
+ * Calcula el nuevo gasto mensual si el usuario recorre los mismos kilómetros con el vehículo híbrido.
+ * @param userMonthlyKm Kilómetros mensuales del usuario.
+ * @param pricePerLiter Precio por litro de gasolina.
+ * @param hybridKmPerGallon Rendimiento del híbrido (km/galón).
+ * @returns Gasto mensual estimado con el híbrido (en soles).
  */
 export const calculateHybridMonthlySpending = (
   userMonthlyKm: number,
@@ -236,10 +232,10 @@ export const calculateHybridMonthlySpending = (
 };
 
 /**
- * Calcula el ahorro mensual al cambiar a un híbrido.
- * @param userMonthlySpending Gasto mensual actual del usuario
- * @param hybridMonthlySpending Gasto mensual con el híbrido
- * @returns Ahorro mensual en soles
+ * Calcula la diferencia entre el gasto actual del usuario y el gasto proyectado con el híbrido.
+ * @param userMonthlySpending Gasto mensual actual del usuario.
+ * @param hybridMonthlySpending Gasto mensual proyectado con el híbrido.
+ * @returns Ahorro mensual en soles.
  */
 export const calculateMonthlySavings = (
   userMonthlySpending: number,

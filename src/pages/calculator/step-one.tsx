@@ -92,10 +92,12 @@ function StepOne({ onSubmit }: StepOneProps) {
     return (
         <div className="min-h-screen flex flex-col bg-[#0a2540]">
             {/* Header */}
-            <header className="bg-[#1a3143] text-white py-10 px-4">
+            <header className="bg-[#1e3a52] text-white py-5 px-4">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex items-center justify-center">
-                        <img src={MitsuiLogo} alt="Mitsui Logo" className="h-8 w-auto" />
+                        <div className="h-8 px-4 rounded flex items-center justify-center">
+                            <img src={MitsuiLogo} alt="Mitsui Logo" className="h-8 w-auto" />
+                        </div>
                     </div>
                 </div>
             </header>

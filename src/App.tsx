@@ -17,16 +17,21 @@ import StepOne from "./pages/calculator/step-one"
 import StepTwo from "./pages/calculator/step-two"
 import StepThree from "./pages/calculator/step-three"
 
-// =================================================================
-// 📦 INTERFACES
-// =================================================================
+// Documentación de las estructuras de datos (Interfaces)
+// Estas interfaces definen la forma de los datos utilizados en el estado del componente.
 
+/**
+ * Datos del formulario de entrada del usuario.
+ */
 export interface FormData {
   brandId: number
   modelId: number
   monthlyExpense: number
 }
 
+/**
+ * Estructura de un vehículo híbrido con los cálculos de ahorro adjuntos.
+ */
 export interface HybridComparison {
   id: number
   specific_version: string
@@ -40,33 +45,31 @@ export interface HybridComparison {
       name: string
     }
   }
-  // Datos calculados
-  distance: number // Km que recorre con el mismo gasto del usuario
-  monthlySpending: number // Gasto para recorrer los mismos km del usuario
-  savings: number // Ahorro mensual
+  distance: number // Km que recorre el híbrido con el mismo gasto mensual del usuario.
+  monthlySpending: number // Gasto del híbrido para recorrer la misma distancia mensual del usuario.
+  savings: number // Ahorro mensual estimado.
 }
 
+/**
+ * Resultados consolidados del cálculo de ahorro.
+ */
 export interface CalculatedData {
-  // Datos del vehículo actual
   currentCarName: string
   currentFuelEfficiency: number
   monthlyDistance: number
   monthlyExpense: number
   
-  // Comparaciones con híbridos
   hybridComparisons: HybridComparison[]
   
-  // Datos de contexto
   gasPricePerLiter: number
 }
 
+/**
+ * Datos del híbrido seleccionado para la vista final de resultados.
+ */
 export interface SelectedHybridData extends HybridComparison {
-  annualSavings: number // Ahorro anual (savings × 12)
+  annualSavings: number // Ahorro proyectado para un año (savings × 12).
 }
-
-// =================================================================
-// 🎯 COMPONENTE PRINCIPAL
-// =================================================================
 
 function App() {
   const [step, setStep] = useState(1)
@@ -80,15 +83,17 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // =================================================================
-  // 🧮 FUNCIÓN DE CÁLCULO PRINCIPAL
-  // =================================================================
+  /**
+   * Ejecuta la lógica principal de cálculo: obtiene datos, valida y calcula las comparaciones.
+   * @param data - Datos de entrada del formulario.
+   * @returns Los datos de comparación consolidados o null en caso de error.
+   */
   const calculateData = async (data: FormData): Promise<CalculatedData | null> => {
     try {
       setLoading(true)
       setError(null)
 
-      // 1️⃣ Obtener todos los datos necesarios en paralelo
+      // Ejecutar todas las llamadas a la API de forma concurrente.
       const [
         currentFuelEfficiency,
         hybridVersionsRaw,
@@ -103,7 +108,7 @@ function App() {
         fetchModelNameById(data.modelId)
       ])
 
-      // 2️⃣ Validación de datos críticos
+      // Validación de datos críticos obtenidos
       if (!currentFuelEfficiency || currentFuelEfficiency <= 0) {
         throw new Error("No se encontró información de rendimiento para este modelo.")
       }
@@ -120,32 +125,31 @@ function App() {
         throw new Error("No se pudo obtener información del vehículo seleccionado.")
       }
 
-      // 3️⃣ Calcular distancia mensual del usuario
+      // Calcular la distancia que el usuario recorre actualmente con su gasto.
       const monthlyDistance = calculateMonthlyKm(
         data.monthlyExpense,
         gasPrice,
         currentFuelEfficiency
       )
 
-      // 4️⃣ Calcular comparaciones con cada híbrido
+      // Mapear y calcular los ahorros para cada versión híbrida.
       const hybridComparisons: HybridComparison[] = hybridVersionsRaw.map((hybrid: any) => {
         const hybridFuelEfficiency = Number(hybrid.km_per_gallon)
 
-        // Distancia que recorre el híbrido con el MISMO gasto
+        // Distancia que recorre el híbrido con el MISMO gasto mensual del usuario.
         const distance = calculateHybridKm(
           data.monthlyExpense,
           gasPrice,
           hybridFuelEfficiency
         )
 
-        // Gasto del híbrido para recorrer los MISMOS km del usuario
+        // Gasto del híbrido para recorrer los MISMOS km que el usuario.
         const monthlySpending = calculateHybridMonthlySpending(
           monthlyDistance,
           gasPrice,
           hybridFuelEfficiency
         )
 
-        // Ahorro mensual
         const savings = calculateMonthlySavings(
           data.monthlyExpense,
           monthlySpending
@@ -157,13 +161,14 @@ function App() {
           km_per_gallon: hybridFuelEfficiency,
           image_url: hybrid.image_url,
           models: hybrid.models,
-          distance: Math.round(distance * 100) / 100, // Redondear a 2 decimales
+          // Redondear a 2 decimales y asegurar que el ahorro no sea negativo.
+          distance: Math.round(distance * 100) / 100,
           monthlySpending: Math.round(monthlySpending * 100) / 100,
-          savings: Math.max(0, Math.round(savings * 100) / 100) // No negativos
+          savings: Math.max(0, Math.round(savings * 100) / 100)
         }
       })
 
-      // 5️⃣ Ordenar híbridos por ahorro (mayor a menor)
+      // Ordenar las comparaciones para mostrar primero los que generan mayor ahorro.
       hybridComparisons.sort((a, b) => b.savings - a.savings)
 
       const currentCarName = `${brandName} ${modelName}`
@@ -178,6 +183,7 @@ function App() {
       }
 
     } catch (err) {
+      // Manejo y registro de errores
       const errorMessage = err instanceof Error ? err.message : "Error desconocido al calcular"
       setError(errorMessage)
       console.error("Error en calculateData:", err)
@@ -186,10 +192,6 @@ function App() {
       setLoading(false)
     }
   }
-
-  // =================================================================
-  // 🎬 HANDLERS DE NAVEGACIÓN
-  // =================================================================
 
   const handleStepOneSubmit = async (data: FormData) => {
     setFormData(data)
@@ -204,7 +206,7 @@ function App() {
   const handleStepTwoSubmit = (hybridId: number) => {
     if (!calculatedData) return
 
-    // Buscar el híbrido seleccionado
+    // Buscar el híbrido seleccionado por su ID
     const hybrid = calculatedData.hybridComparisons.find(h => h.id === hybridId)
     
     if (!hybrid) {
@@ -212,7 +214,7 @@ function App() {
       return
     }
 
-    // Agregar el ahorro anual
+    // Calcular el ahorro anual para mostrarlo en el paso final.
     setSelectedHybrid({
       ...hybrid,
       annualSavings: hybrid.savings * 12
@@ -243,11 +245,7 @@ function App() {
     setError(null)
   }
 
-  // =================================================================
-  // 🎨 RENDER
-  // =================================================================
-
-  // Pantalla de error
+  // Pantalla de error (se muestra si hay algún mensaje en el estado `error`)
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-50">
@@ -268,7 +266,7 @@ function App() {
     )
   }
 
-  // Pantalla de carga
+  // Pantalla de carga (se muestra mientras `loading` es true)
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
