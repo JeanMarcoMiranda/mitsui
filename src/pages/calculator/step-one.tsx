@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { FormData } from "@/App"
 import MitsuiLogo from "@/assets/mitsui_logo.svg"
+import BannerToyota from "@/assets/banner_toyota_2.jpg";
 import Frase from "@/assets/frase.svg"
 import { fetchAllBrands, fetchModelsByBrandId } from "@/api/services/vehicleService"
 import type { Brand, Model } from "@/api/types"
@@ -113,19 +114,16 @@ function StepOne({ onSubmit }: StepOneProps) {
 
             {/* Hero Section: Imagen de fondo y frase promocional. */}
             <div className="relative w-full">
-                <div className="relative h-48 md:h-64 overflow-hidden">
-                    <div className="absolute inset-0">
-                        <img
-                            src="https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&q=80"
-                            alt="Toyota Hybrid Vehicles"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
+                {/* Hero como background */}
+                <div
+                    className="relative h-64 md:h-96 lg:h-[580px] w-full bg-cover bg-no-repeat bg-center"
+                    style={{ backgroundImage: `url(${BannerToyota})`, backgroundPosition: "center bottom" }}
+                >
+                    {/* Gradiente pequeño en la parte baja */}
+                    <div className="absolute bottom-0 left-0 w-full h-[20%] bg-gradient-to-t from-black via-black/50 to-transparent"></div>
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a3143] via-transparent to-transparent"></div>
-                    <div className="absolute inset-0 bg-black/20"></div>
-
-                    <div className="absolute top-2 md:top-6 left-1/2 -translate-x-1/2 z-10">
+                    {/* Logo frase */}
+                    <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2">
                         <img src={Frase} alt="Frase" className="h-20 w-auto" />
                     </div>
                 </div>

@@ -61,7 +61,7 @@ const benefits = [
  * de gastos, además de los beneficios de la tecnología híbrida.
  */
 function StepThree({ calculatedData, selectedHybrid, onReset, onBack }: StepThreeProps) {
-  
+
   /**
    * Formatea un número para usar separadores de miles y dos decimales (formato de moneda S/).
    * @param value - Cantidad de dinero a formatear.
@@ -241,12 +241,12 @@ function StepThree({ calculatedData, selectedHybrid, onReset, onBack }: StepThre
                   Escanea el código QR o solicita que te contacten para una demostración.
                 </p>
               </div>
+
               <div className="flex items-center gap-4">
-                {/* Placeholder para el Código QR */}
                 <div className="bg-white p-4 rounded-xl shadow-md">
                   <img
-                    src="/qr-code-toyota-hybrid.jpg"
-                    alt="Código QR"
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.toyotaperu.com.pe"
+                    alt="Código QR Mitsui"
                     className="w-28 h-28"
                   />
                 </div>
