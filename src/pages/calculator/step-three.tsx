@@ -74,21 +74,6 @@ function StepThree({ calculatedData, selectedHybrid, onReset, onBack }: StepThre
     })
   }
 
-  /**
-   * Formatea un número grande sin decimales (principalmente para distancias largas).
-   * @param value - Número entero a formatear.
-   * @returns Cadena de texto formateada (e.g., "1,234").
-   */
-  const formatInteger = (value: number) => {
-    // Nota: Aunque se llama 'formatInteger', el toLocaleString se usa aquí para formatear números grandes
-    // con separadores de miles, aunque el uso del calculatedData.monthlyDistance ya incluye decimales.
-    // Esto es una convención para mejorar la legibilidad.
-    return value.toLocaleString("es-PE", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })
-  }
-
   // Extraer nombres descriptivos del objeto anidado para mayor claridad en el JSX.
   const brandName = selectedHybrid.models.brands.name
   const modelName = selectedHybrid.models.name

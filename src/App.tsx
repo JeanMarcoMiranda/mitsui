@@ -73,11 +73,6 @@ export interface SelectedHybridData extends HybridComparison {
 
 function App() {
   const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState<FormData>({
-    brandId: 0,
-    modelId: 0,
-    monthlyExpense: 0,
-  })
   const [calculatedData, setCalculatedData] = useState<CalculatedData | null>(null)
   const [selectedHybrid, setSelectedHybrid] = useState<SelectedHybridData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -194,7 +189,6 @@ function App() {
   }
 
   const handleStepOneSubmit = async (data: FormData) => {
-    setFormData(data)
     const calculated = await calculateData(data)
 
     if (calculated) {
@@ -235,11 +229,6 @@ function App() {
 
   const handleReset = () => {
     setStep(1)
-    setFormData({
-      brandId: 0,
-      modelId: 0,
-      monthlyExpense: 0,
-    })
     setCalculatedData(null)
     setSelectedHybrid(null)
     setError(null)
@@ -288,7 +277,6 @@ function App() {
         <StepTwo
           calculatedData={calculatedData}
           onSubmit={handleStepTwoSubmit}
-          onBack={handleBack}
         />
       )}
       

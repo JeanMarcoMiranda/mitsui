@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient';
-import type { Brand, Model, Version, Config } from '../types';
+import type { Brand, Model, Config } from '../types';
 
 /**
  * Obtiene todas las marcas de vehículos disponibles, ordenadas alfabéticamente.

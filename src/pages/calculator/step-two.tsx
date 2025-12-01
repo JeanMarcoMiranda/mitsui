@@ -8,7 +8,6 @@ import MitsuiLogo from "@/assets/mitsui_logo.svg"
 interface StepTwoProps {
     calculatedData: CalculatedData
     onSubmit: (hybridId: number) => void
-    onBack: () => void
 }
 
 /**
@@ -16,7 +15,7 @@ interface StepTwoProps {
  * Muestra la distancia mensual actual del usuario y presenta las tarjetas
  * de comparación con los modelos híbridos Toyota. Permite al usuario seleccionar un híbrido.
  */
-function StepTwo({ calculatedData, onSubmit, onBack }: StepTwoProps) {
+function StepTwo({ calculatedData, onSubmit }: StepTwoProps) {
     const [selectedHybrid, setSelectedHybrid] = useState<number | null>(null)
 
     const handleSubmit = () => {
