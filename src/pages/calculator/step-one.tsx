@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { FormData } from "@/App"
 import MitsuiLogo from "@/assets/mitsui_logo.svg"
-import BannerToyota from "@/assets/banner_toyota_2.jpg";
+import BannerToyota from "@/assets/banner_toyota.jpg";
 import Frase from "@/assets/frase.svg"
 import { fetchAllBrands, fetchModelsByBrandId } from "@/api/services/vehicleService"
 import type { Brand, Model } from "@/api/types"
